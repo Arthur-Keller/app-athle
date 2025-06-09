@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>VAFA – Classement des Athlètes</title>
+  <title>VAFA – Classement Athlètes</title>
 
-  <!-- Variables CSS pour les couleurs VAFA -->
+  <!-- Variables CSS VAFA -->
   <style>
     :root {
       --vafa-bleu: #0055A4;
@@ -13,16 +13,14 @@
       --vafa-gris: #f8f9fa;
     }
     body {
-      background-color: var(--vafa-gris);
+      background: var(--vafa-gris);
       font-family: "Segoe UI", Arial, sans-serif;
     }
     .navbar {
-      background-color: var(--vafa-bleu);
+      background: var(--vafa-bleu);
       padding: .5rem 1rem;
     }
-    .navbar img {
-      height: 50px;
-    }
+    .navbar img { height: 50px; }
     .navbar-brand {
       color: white;
       font-size: 1.25rem;
@@ -34,19 +32,19 @@
       border-radius: .5rem;
       padding: 1rem;
       margin: 1rem auto;
-      max-width: 900px;
+      max-width: 960px;
     }
     .filter-card .form-label {
       color: var(--vafa-bleu);
       font-weight: 600;
     }
     .btn-vafa {
-      background-color: var(--vafa-vert);
+      background: var(--vafa-vert);
       color: white;
       border: none;
     }
     .btn-vafa:hover {
-      background-color: #7bb132;
+      background: #7bb132;
     }
     .table-container {
       background: white;
@@ -57,29 +55,29 @@
       max-width: 1200px;
     }
     .table thead {
-      background-color: var(--vafa-bleu);
+      background: var(--vafa-bleu);
       color: white;
     }
     .table tbody tr:hover {
-      background-color: #e8f3ff;
+      background: #e8f3ff;
     }
-    @media (max-width: 576px) {
-      .navbar-brand { font-size: 1rem; }
-      .filter-card { padding: .5rem; }
-      .filter-card .form-label { font-size: .9rem; }
+    @media (max-width:576px) {
+      .filter-card { padding:.5rem; }
+      .filter-card .form-label { font-size:.9rem; }
+      .navbar-brand { font-size:1rem; }
     }
   </style>
 
-  <!-- Bootstrap (CSS only) -->
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
         rel="stylesheet">
 </head>
 <body>
 
-  <!-- Barre de navigation avec logo VAFA -->
+  <!-- Barre de navigation VAFA -->
   <nav class="navbar">
     <div class="d-flex align-items-center">
-      <img src="../static/image.png" alt="VAFA logo">
+      <img src="{{ url_for('static', filename='logo_vafa.png') }}" alt="VAFA logo">
       <span class="navbar-brand">VAFA – Classement Athlètes</span>
     </div>
   </nav>
@@ -87,6 +85,20 @@
   <!-- Formulaire de filtres -->
   <div class="filter-card">
     <form method="get" class="row gy-2 gx-3 align-items-end">
+      <!-- Sélecteur de feuille (compétition) -->
+      <div class="col-md-3">
+        <label for="sheet" class="form-label">Compétition</label>
+        <select class="form-select" id="sheet" name="sheet">
+          {% for name in sheet_names %}
+            <option value="{{ name }}"
+              {% if name == selected_sheet %}selected{% endif %}>
+              {{ name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Filtre catégorie -->
       <div class="col-md-3">
         <label for="category" class="form-label">Catégorie</label>
         <select class="form-select" id="category" name="category">
@@ -99,30 +111,42 @@
           {% endfor %}
         </select>
       </div>
+
+      <!-- Tri par colonne -->
       <div class="col-md-3">
         <label for="sort" class="form-label">Trier par</label>
         <select class="form-select" id="sort" name="sort">
           <option value="Place"        {% if sort_field=='Place' %}selected{% endif %}>Place</option>
-          <option value="Nom / Prénom" {% if sort_field=='Nom / Prénom' %}selected{% endif %}>Nom / Prénom</option>
+          <option value="Nom / Prénom" {% if sort_field=='Nom / Prénom' %}selected{% endif %}>
+            Nom / Prénom
+          </option>
           <option value="Club"         {% if sort_field=='Club' %}selected{% endif %}>Club</option>
-          <option value="Cat."         {% if sort_field=='Cat.' %}selected{% endif %}>Catégorie</option>
-          <option value="Perf."        {% if sort_field=='Perf.' %}selected{% endif %}>Performance</option>
+          <option value="Cat."         {% if sort_field=='Cat.' %}selected{% endif %}>
+            Catégorie
+          </option>
+          <option value="Perf."        {% if sort_field=='Perf.' %}selected{% endif %}>
+            Performance
+          </option>
         </select>
       </div>
-      <div class="col-md-3">
+
+      <!-- Ordre -->
+      <div class="col-md-2">
         <label for="order" class="form-label">Ordre</label>
         <select class="form-select" id="order" name="order">
           <option value="desc" {% if sort_order=='desc' %}selected{% endif %}>Décroissant</option>
           <option value="asc"  {% if sort_order=='asc'  %}selected{% endif %}>Croissant</option>
         </select>
       </div>
-      <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-vafa">Appliquer</button>
+
+      <!-- Bouton envoyez -->
+      <div class="col-md-1 d-grid">
+        <button type="submit" class="btn btn-vafa">OK</button>
       </div>
     </form>
   </div>
 
-  <!-- Tableau des résultats -->
+  <!-- Tableau -->
   <div class="table-container">
     <div class="table-responsive">
       <table class="table table-striped table-hover">
@@ -150,7 +174,7 @@
     </div>
   </div>
 
-  <!-- Bootstrap JS Bundle -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
   </script>
 </body>
