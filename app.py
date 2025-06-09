@@ -1,16 +1,26 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
+import os
+import base64
+
+# --- Décodage du service_account.json depuis la variable d'environnement Base64 ---
+b64 = os.getenv('SERVICE_ACCOUNT_JSON_BASE64')
+SERVICE_ACCOUNT_PATH = os.getenv('SERVICE_ACCOUNT_PATH', 'service_account.json')
+if b64:
+    data = base64.b64decode(b64)
+    with open(SERVICE_ACCOUNT_PATH, 'wb') as f:
+        f.write(data)
+# -------------------------------------------------------------------------------
+
 from flask import Flask, render_template, request
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import os
 
 app = Flask(__name__)
 
 # Configuration Google Sheets
 SHEET_KEY = '19tmcUn-MXUqQrzF43BYw8zeLOE7GZiQhk58MhrFAgRA'
-SERVICE_ACCOUNT_PATH = os.getenv('SERVICE_ACCOUNT_PATH', 'service_account.json')
 SCOPES = [
     'https://spreadsheets.google.com/feeds',
     'https://www.googleapis.com/auth/drive'

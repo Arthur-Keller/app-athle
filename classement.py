@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import os
+import base64
 import math
 import requests
 from urllib.parse import urlparse, parse_qs
@@ -9,10 +10,18 @@ from bs4 import BeautifulSoup
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+# --- Décodage du service_account.json depuis la variable d'environnement Base64 ---
+b64 = os.getenv('SERVICE_ACCOUNT_JSON_BASE64')
+SERVICE_ACCOUNT_PATH = os.getenv('SERVICE_ACCOUNT_PATH', 'service_account.json')
+if b64:
+    data = base64.b64decode(b64)
+    with open(SERVICE_ACCOUNT_PATH, 'wb') as f:
+        f.write(data)
+# -------------------------------------------------------------------------------
+
 # Clé du Google Sheet (ou mettez-la en variable d'env si vous préférez)
 SPREADSHEET_KEY = '19tmcUn-MXUqQrzF43BYw8zeLOE7GZiQhk58MhrFAgRA'
-# Chemin vers votre JSON de compte de service
-SERVICE_ACCOUNT_PATH = os.getenv('SERVICE_ACCOUNT_PATH', 'service_account.json')
+
 # Scopes Google Sheets/Drive
 SCOPES = [
     'https://spreadsheets.google.com/feeds',
@@ -49,9 +58,11 @@ def extract_and_sort(rows):
     data = []
     for tr in rows:
         tds = tr.find_all('td')
-        if len(tds) < 13: continue
+        if len(tds) < 13:
+            continue
         name = tds[2].get_text(strip=True)
-        if not name or name.lower() == 'nom': continue
+        if not name or name.lower() == 'nom':
+            continue
         club    = tds[4].get_text(strip=True)
         cat     = tds[8].get_text(strip=True)
         perfstr = tds[12].get_text(strip=True)
@@ -62,7 +73,8 @@ def extract_and_sort(rows):
         data.append((name, club, cat, perfstr, perf))
     data.sort(key=lambda x: x[4] if x[4] is not None else -math.inf, reverse=True)
     # Numérotation
-    return [[i+1, rec[0], rec[1], rec[2], rec[3]] for i, rec in enumerate(data)]
+    return [[i+1, rec[0], rec[1], rec[2], rec[3]]
+            for i, rec in enumerate(data)]
 
 def write_to_sheet(data, sheet_name):
     """Écrit dans l'onglet sheet_name (créé si absent), à partir de la ligne 2."""
@@ -72,7 +84,6 @@ def write_to_sheet(data, sheet_name):
     try:
         ws = sh.worksheet(sheet_name)
     except gspread.exceptions.WorksheetNotFound:
-        # Crée une nouvelle feuille, dimensionnée à la volée
         ws = sh.add_worksheet(title=sheet_name, rows=str(len(data)+1), cols="5")
     # Vide A1:E
     ws.batch_clear([f"A1:E{ws.row_count}"])
@@ -90,7 +101,6 @@ def main():
         print("❌ Erreur lors de la récupération de la page :", e)
         return
 
-    # Paramètres de l'URL
     epreuve, sexe = parse_link_params(url)
     compname = get_competition_name(soup)
     sheet_name = f"{compname} – {epreuve} {sexe}"
