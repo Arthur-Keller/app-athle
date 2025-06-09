@@ -1,0 +1,33 @@
+# Byte-compiled Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Flask instance folder (if vous en utilisez un)
+instance/
+
+# Credentials and tokens
+service_account.json
+token.json
+
+# Environment variables
+.env
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Static build artifacts (si vous avez un dossier frontend)
+node_modules/
+dist/
