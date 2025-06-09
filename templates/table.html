@@ -2,106 +2,156 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Classement des Athlètes</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VAFA – Classement des Athlètes</title>
+
+  <!-- Variables CSS pour les couleurs VAFA -->
   <style>
-    body { background-color: #f8f9fa; }
-    .controls { margin: 20px 0; }
+    :root {
+      --vafa-bleu: #0055A4;
+      --vafa-vert: #8DC63F;
+      --vafa-gris: #f8f9fa;
+    }
+    body {
+      background-color: var(--vafa-gris);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    .navbar {
+      background-color: var(--vafa-bleu);
+      padding: .5rem 1rem;
+    }
+    .navbar img {
+      height: 50px;
+    }
+    .navbar-brand {
+      color: white;
+      font-size: 1.25rem;
+      margin-left: .5rem;
+    }
+    .filter-card {
+      background: white;
+      border: 2px solid var(--vafa-vert);
+      border-radius: .5rem;
+      padding: 1rem;
+      margin: 1rem auto;
+      max-width: 900px;
+    }
+    .filter-card .form-label {
+      color: var(--vafa-bleu);
+      font-weight: 600;
+    }
+    .btn-vafa {
+      background-color: var(--vafa-vert);
+      color: white;
+      border: none;
+    }
+    .btn-vafa:hover {
+      background-color: #7bb132;
+    }
     .table-container {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      background: white;
+      padding: 1rem;
+      border-radius: .5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin: 0 auto 2rem;
+      max-width: 1200px;
+    }
+    .table thead {
+      background-color: var(--vafa-bleu);
+      color: white;
+    }
+    .table tbody tr:hover {
+      background-color: #e8f3ff;
     }
     @media (max-width: 576px) {
-      .table-responsive { font-size: 0.85rem; }
+      .navbar-brand { font-size: 1rem; }
+      .filter-card { padding: .5rem; }
+      .filter-card .form-label { font-size: .9rem; }
     }
   </style>
+
+  <!-- Bootstrap (CSS only) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet">
 </head>
 <body>
-  <div class="container-fluid">
-    <h1 class="text-center my-4">Classement des Athlètes</h1>
 
-    <!-- Sélection de la feuille + filtres + tri -->
-    <div class="controls row justify-content-center gx-2">
+  <!-- Barre de navigation avec logo VAFA -->
+  <nav class="navbar">
+    <div class="d-flex align-items-center">
+      <img src="../static/image.png" alt="VAFA logo">
+      <span class="navbar-brand">VAFA – Classement Athlètes</span>
+    </div>
+  </nav>
+
+  <!-- Formulaire de filtres -->
+  <div class="filter-card">
+    <form method="get" class="row gy-2 gx-3 align-items-end">
       <div class="col-md-3">
-        <label class="form-label">Compétition</label>
-        <select class="form-select" id="sheet" onchange="applyFilters()">
-          {% for name in sheet_names %}
-            <option value="{{ name }}" {% if name==selected_sheet %}selected{% endif %}>{{ name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Catégorie</label>
-        <select class="form-select" id="category" onchange="applyFilters()">
+        <label for="category" class="form-label">Catégorie</label>
+        <select class="form-select" id="category" name="category">
           <option value="" {% if not selected_category %}selected{% endif %}>Toutes</option>
           {% for cat in categories %}
-            <option value="{{ cat }}" {% if cat==selected_category %}selected{% endif %}>{{ cat }}</option>
+            <option value="{{ cat }}"
+              {% if cat == selected_category %}selected{% endif %}>
+              {{ cat }}
+            </option>
           {% endfor %}
         </select>
       </div>
-      <div class="col-md-2">
-        <label class="form-label">Trier par</label>
-        <select class="form-select" id="sort" onchange="applyFilters()">
-          <option value="Place" {% if sort_field=='Place' %}selected{% endif %}>Place</option>
+      <div class="col-md-3">
+        <label for="sort" class="form-label">Trier par</label>
+        <select class="form-select" id="sort" name="sort">
+          <option value="Place"        {% if sort_field=='Place' %}selected{% endif %}>Place</option>
           <option value="Nom / Prénom" {% if sort_field=='Nom / Prénom' %}selected{% endif %}>Nom / Prénom</option>
-          <option value="Club" {% if sort_field=='Club' %}selected{% endif %}>Club</option>
-          <option value="Cat." {% if sort_field=='Cat.' %}selected{% endif %}>Cat.</option>
-          <option value="Perf." {% if sort_field=='Perf.' %}selected{% endif %}>Perf.</option>
+          <option value="Club"         {% if sort_field=='Club' %}selected{% endif %}>Club</option>
+          <option value="Cat."         {% if sort_field=='Cat.' %}selected{% endif %}>Catégorie</option>
+          <option value="Perf."        {% if sort_field=='Perf.' %}selected{% endif %}>Performance</option>
         </select>
       </div>
-      <div class="col-md-2">
-        <label class="form-label">Ordre</label>
-        <select class="form-select" id="order" onchange="applyFilters()">
+      <div class="col-md-3">
+        <label for="order" class="form-label">Ordre</label>
+        <select class="form-select" id="order" name="order">
           <option value="desc" {% if sort_order=='desc' %}selected{% endif %}>Décroissant</option>
-          <option value="asc" {% if sort_order=='asc' %}selected{% endif %}>Croissant</option>
+          <option value="asc"  {% if sort_order=='asc'  %}selected{% endif %}>Croissant</option>
         </select>
       </div>
-    </div>
+      <div class="col-md-2 d-grid">
+        <button type="submit" class="btn btn-vafa">Appliquer</button>
+      </div>
+    </form>
+  </div>
 
-    <!-- Tableau -->
-    <div class="table-container">
-      <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle">
-          <thead class="table-primary">
+  <!-- Tableau des résultats -->
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Place</th>
+            <th scope="col">Nom / Prénom</th>
+            <th scope="col">Club</th>
+            <th scope="col">Cat.</th>
+            <th scope="col">Perf.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
             <tr>
-              <th>Place</th>
-              <th>Nom / Prénom</th>
-              <th>Club</th>
-              <th>Cat.</th>
-              <th>Perf.</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in rows %}
-            <tr>
-              <td>{{ row['Place'] }}</td>
+              <th scope="row">{{ row['Place'] }}</th>
               <td>{{ row['Nom / Prénom'] }}</td>
               <td>{{ row['Club'] }}</td>
               <td>{{ row['Cat.'] }}</td>
               <td>{{ row['Perf.'] }}</td>
             </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Bootstrap JS et petit script pour recharger avec les bons params -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    function applyFilters() {
-      const params = new URLSearchParams();
-      params.set('sheet',    document.getElementById('sheet').value);
-      params.set('category', document.getElementById('category').value);
-      params.set('sort',     document.getElementById('sort').value);
-      params.set('order',    document.getElementById('order').value);
-      window.location.search = params.toString();
-    }
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
   </script>
 </body>
 </html>
