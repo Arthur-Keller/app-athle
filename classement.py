@@ -9,23 +9,26 @@ from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.triggers.cron import CronTrigger
 
-# --- Décodage du service_account depuis la var d'env Base64 ---
+# --- Décodage du service_account.json depuis la var d'env Base64 ---
 b64 = os.getenv('SERVICE_ACCOUNT_JSON_BASE64')
 SERVICE_ACCOUNT_PATH = os.getenv('SERVICE_ACCOUNT_PATH', 'service_account.json')
 if b64:
     data = base64.b64decode(b64)
     with open(SERVICE_ACCOUNT_PATH, 'wb') as f:
         f.write(data)
-# --------------------------------------------------------------
+# ----------------------------------------------------------------
 
-# Google Sheets
+# Google Sheets config
 SPREADSHEET_KEY = '19tmcUn-MXUqQrzF43BYw8zeLOE7GZiQhk58MhrFAgRA'
-SCOPES = ['https://spreadsheets.google.com/feeds',
-          'https://www.googleapis.com/auth/drive']
+SCOPES = [
+    'https://spreadsheets.google.com/feeds',
+    'https://www.googleapis.com/auth/drive'
+]
 
 def fetch_and_parse(url):
-    """Télécharge la page, renvoie soup + <tr> du tableau."""
     resp = requests.get(url)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.content, 'html.parser')
@@ -35,25 +38,24 @@ def fetch_and_parse(url):
     return soup, table.find_all('tr')
 
 def parse_link_params(url):
-    """Extrait frmepreuve et frmsexe de l'URL."""
     qs = parse_qs(urlparse(url).query)
     return qs.get('frmepreuve', [''])[0], qs.get('frmsexe', [''])[0]
 
 def get_competition_name(soup):
-    """Récupère le nom après la date dans <div class='headers1'>."""
     div = soup.find('div', class_='headers1')
     full = div.get_text(strip=True) if div else 'Compétition'
     return full.split(' - ',1)[1].strip() if ' - ' in full else full
 
 def extract_and_sort(rows):
-    """Retourne [[place,name,club,cat,perf],…] trié perf décroissante."""
     tmp = []
     for tr in rows:
         tds = tr.find_all('td')
         if len(tds) < 13: continue
         name = tds[2].get_text(strip=True)
         if not name or name.lower()=='nom': continue
-        club, cat, perf = tds[4].get_text(strip=True), tds[8].get_text(strip=True), tds[12].get_text(strip=True)
+        club = tds[4].get_text(strip=True)
+        cat  = tds[8].get_text(strip=True)
+        perf = tds[12].get_text(strip=True)
         try: perf_val = float(perf)
         except: perf_val = None
         tmp.append((name, club, cat, perf, perf_val))
@@ -61,7 +63,6 @@ def extract_and_sort(rows):
     return [[i+1, *rec[:4]] for i, rec in enumerate(tmp)]
 
 def write_to_sheet(data, sheet_name):
-    """Écrit l’en-tête + data dans l’onglet sheet_name (créé si besoin)."""
     creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_PATH, SCOPES)
     client = gspread.authorize(creds)
     sh = client.open_by_key(SPREADSHEET_KEY)
@@ -83,16 +84,16 @@ def process_url(url):
         write_to_sheet(data, sheet_name)
         print(f"✔️  {len(data)} lignes écrites dans l'onglet «{sheet_name}»")
     else:
-        print(f"⚠️  Aucun athlète pour {sheet_name}")
+        print(f"⚠️  Aucun athlète pour «{sheet_name}»")
 
-def main():
-    # Si lien.txt existe, on boucle dessus, sinon on demande une URL
+def job():
+    """Tâche programmée : lit lien.txt ou demande une URL."""
     if os.path.isfile('lien.txt'):
         with open('lien.txt', encoding='utf-8') as f:
             liens = [l.strip() for l in f if l.strip()]
         for lien in liens:
-            print(f"\n→ Traitement de {lien}")
             try:
+                print(f"\n→ Traitement de {lien}")
                 process_url(lien)
             except Exception as e:
                 print(f"❌ Erreur sur {lien} : {e}")
@@ -101,4 +102,12 @@ def main():
         process_url(url)
 
 if __name__ == "__main__":
-    main()
+    # Exécution immédiate une fois
+    job()
+
+    # Puis planification toutes les 30 min entre 09h et 21h
+    scheduler = BlockingScheduler(timezone="Europe/Paris")
+    trigger = CronTrigger(hour="9-21", minute="0,30")
+    scheduler.add_job(job, trigger)
+    print("Scheduler démarré – exécution toutes les 30 min entre 09h et 21h…")
+    scheduler.start()
