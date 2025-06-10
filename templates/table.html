@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>VAFA – Classement Athlètes</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VAFA – {{ selected_sheet }}</title>
 
   <!-- Variables CSS VAFA -->
   <style>
@@ -16,15 +16,26 @@
       background: var(--vafa-gris);
       font-family: "Segoe UI", Arial, sans-serif;
     }
-    .navbar {
+    .navbar-primary {
       background: var(--vafa-bleu);
       padding: .5rem 1rem;
     }
-    .navbar img { height: 50px; }
-    .navbar-brand {
-      color: white;
-      font-size: 1.25rem;
-      margin-left: .5rem;
+    .navbar-primary img { height: 50px; }
+    .navbar-primary .navbar-brand {
+      color: white; font-size: 1.25rem; margin-left: .5rem;
+    }
+    .nav-secondary {
+      background: white;
+      border-bottom: 2px solid var(--vafa-vert);
+      margin-bottom: 1rem;
+    }
+    .nav-secondary .nav-link {
+      color: var(--vafa-bleu);
+      font-weight: 600;
+    }
+    .nav-secondary .nav-link.disabled {
+      color: #aaa;
+      pointer-events: none;
     }
     .filter-card {
       background: white;
@@ -64,22 +75,37 @@
     @media (max-width:576px) {
       .filter-card { padding:.5rem; }
       .filter-card .form-label { font-size:.9rem; }
-      .navbar-brand { font-size:1rem; }
+      .navbar-primary .navbar-brand { font-size:1rem; }
     }
   </style>
 
   <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet">
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
 </head>
 <body>
 
-  <!-- Barre de navigation VAFA -->
-  <nav class="navbar">
+  <!-- Barre de titre -->
+  <nav class="navbar navbar-primary">
     <div class="d-flex align-items-center">
-      <img src="{{ url_for('static', filename='logo_vafa.png') }}" alt="VAFA logo">
-      <span class="navbar-brand">VAFA – Classement Athlètes</span>
+      <img src="{{ url_for('static', filename='logo_vafa.png') }}" alt="VAFA logo" />
+      <span class="navbar-brand">VAFA – {{ selected_sheet }}</span>
     </div>
+  </nav>
+
+  <!-- Navbar secondaire -->
+  <nav class="nav nav-secondary justify-content-center">
+    <a class="nav-link active" href="{{ url_for('index') }}">
+      Liste des engagé·e·s
+    </a>
+    <a class="nav-link" href="{{ url_for('reload') }}">
+      Recharger la liste <small class="text-muted">(WIP)</small>
+    </a>
+    <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">
+      Ajouter une liste <small class="text-muted">(WIP)</small>
+    </a>
   </nav>
 
   <!-- Formulaire de filtres -->
@@ -90,8 +116,7 @@
         <label for="sheet" class="form-label">Compétition</label>
         <select class="form-select" id="sheet" name="sheet">
           {% for name in sheet_names %}
-            <option value="{{ name }}"
-              {% if name == selected_sheet %}selected{% endif %}>
+            <option value="{{ name }}" {% if name==selected_sheet %}selected{% endif %}>
               {{ name }}
             </option>
           {% endfor %}
@@ -104,8 +129,7 @@
         <select class="form-select" id="category" name="category">
           <option value="" {% if not selected_category %}selected{% endif %}>Toutes</option>
           {% for cat in categories %}
-            <option value="{{ cat }}"
-              {% if cat == selected_category %}selected{% endif %}>
+            <option value="{{ cat }}" {% if cat==selected_category %}selected{% endif %}>
               {{ cat }}
             </option>
           {% endfor %}
@@ -121,12 +145,8 @@
             Nom / Prénom
           </option>
           <option value="Club"         {% if sort_field=='Club' %}selected{% endif %}>Club</option>
-          <option value="Cat."         {% if sort_field=='Cat.' %}selected{% endif %}>
-            Catégorie
-          </option>
-          <option value="Perf."        {% if sort_field=='Perf.' %}selected{% endif %}>
-            Performance
-          </option>
+          <option value="Cat."         {% if sort_field=='Cat.' %}selected{% endif %}>Catégorie</option>
+          <option value="Perf."        {% if sort_field=='Perf.' %}selected{% endif %}>Performance</option>
         </select>
       </div>
 
@@ -139,17 +159,17 @@
         </select>
       </div>
 
-      <!-- Bouton envoyez -->
+      <!-- OK -->
       <div class="col-md-1 d-grid">
         <button type="submit" class="btn btn-vafa">OK</button>
       </div>
     </form>
   </div>
 
-  <!-- Tableau -->
+  <!-- Tableau des engagé·e·s -->
   <div class="table-container">
     <div class="table-responsive">
-      <table class="table table-striped table-hover">
+      <table class="table table-striped table-hover align-middle">
         <thead>
           <tr>
             <th scope="col">Place</th>
@@ -174,7 +194,7 @@
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
+  <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
   </script>
 </body>
