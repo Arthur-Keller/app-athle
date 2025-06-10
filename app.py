@@ -9,7 +9,7 @@ from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, flash
 
 # --- Décodage du service_account.json depuis la var d'env Base64 ---
 b64 = os.getenv('SERVICE_ACCOUNT_JSON_BASE64')
@@ -21,6 +21,7 @@ if b64:
 # ----------------------------------------------------------------
 
 app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET', 'change-me')  # nécessaire pour flash()
 
 # Configuration Google Sheets
 SPREADSHEET_KEY = '19tmcUn-MXUqQrzF43BYw8zeLOE7GZiQhk58MhrFAgRA'
@@ -35,7 +36,6 @@ def get_workbook():
     return client.open_by_key(SPREADSHEET_KEY)
 
 def get_sheet_data(sheet_name):
-    """Lit un onglet et retourne ses lignes en dicts, convertit 'Perf.' en float."""
     wb = get_workbook()
     ws = wb.worksheet(sheet_name)
     rows = ws.get_all_records()
@@ -45,6 +45,25 @@ def get_sheet_data(sheet_name):
         except ValueError:
             row['Perf.'] = 0.0
     return rows
+
+def get_competitions():
+    """Lit l’onglet 'Competitions' et renvoie liste de dicts {'Nom':..., 'URL':...}."""
+    wb = get_workbook()
+    try:
+        ws = wb.worksheet('Competitions')
+    except gspread.exceptions.WorksheetNotFound:
+        return []
+    return ws.get_all_records()
+
+def append_competition(name, url):
+    """Ajoute une ligne [Nom, URL] dans l’onglet Competitions."""
+    wb = get_workbook()
+    try:
+        ws = wb.worksheet('Competitions')
+    except gspread.exceptions.WorksheetNotFound:
+        ws = wb.add_worksheet(title='Competitions', rows='100', cols='2')
+        ws.append_row(['Nom', 'URL'])
+    ws.append_row([name, url], value_input_option='RAW')
 
 def fetch_and_parse(url):
     resp = requests.get(url)
@@ -68,11 +87,9 @@ def extract_and_sort(rows):
     tmp = []
     for tr in rows:
         tds = tr.find_all('td')
-        if len(tds) < 13:
-            continue
+        if len(tds) < 13: continue
         name = tds[2].get_text(strip=True)
-        if not name or name.lower() == 'nom':
-            continue
+        if not name or name.lower() == 'nom': continue
         club = tds[4].get_text(strip=True)
         cat  = tds[8].get_text(strip=True)
         perf = tds[12].get_text(strip=True)
@@ -91,44 +108,34 @@ def write_to_sheet(data, sheet_name):
     except gspread.exceptions.WorksheetNotFound:
         ws = wb.add_worksheet(title=sheet_name, rows=str(len(data)+1), cols="5")
     ws.batch_clear([f"A1:E{ws.row_count}"])
-    ws.update('A1:E1', [["Place", "Nom / Prénom", "Club", "Cat.", "Perf."]])
+    ws.update('A1:E1', [["Place","Nom / Prénom","Club","Cat.","Perf."]])
     ws.append_rows(data, value_input_option='RAW')
 
 def process_url(url):
     soup, rows = fetch_and_parse(url)
     epreuve, sexe = parse_link_params(url)
     comp = get_competition_name(soup)
-    sheet = f"{comp} – {epreuve} {sexe}"
+    sheet_name = f"{comp} – {epreuve} {sexe}"
     data = extract_and_sort(rows)
     if data:
-        write_to_sheet(data, sheet)
-    return sheet, len(data)
-
-def get_competitions():
-    """Lit l’onglet 'Competitions' (Nom + URL) et retourne une liste de dicts."""
-    wb = get_workbook()
-    try:
-        ws = wb.worksheet('Competitions')
-    except gspread.exceptions.WorksheetNotFound:
-        return []
-    return ws.get_all_records()
+        write_to_sheet(data, sheet_name)
+    return sheet_name, len(data)
 
 @app.route('/', methods=['GET'])
 def index():
     wb = get_workbook()
     sheet_names = [ws.title for ws in wb.worksheets()]
-
-    selected_sheet   = request.args.get('sheet', sheet_names[0])
+    selected_sheet = request.args.get('sheet', sheet_names[0])
     if selected_sheet not in sheet_names:
         selected_sheet = sheet_names[0]
 
-    category         = request.args.get('category', '')
-    sort_field       = request.args.get('sort', 'Perf.')
-    sort_order       = request.args.get('order', 'desc')
+    selected_category = request.args.get('category', '')
+    sort_field        = request.args.get('sort', 'Perf.')
+    sort_order        = request.args.get('order', 'desc')
 
     rows = get_sheet_data(selected_sheet)
-    if category:
-        rows = [r for r in rows if r.get('Cat.') == category]
+    if selected_category:
+        rows = [r for r in rows if r.get('Cat.') == selected_category]
 
     reverse = (sort_order == 'desc')
     rows.sort(key=lambda r: r.get(sort_field, 0) or 0, reverse=reverse)
@@ -141,13 +148,13 @@ def index():
         sheet_names=sheet_names,
         selected_sheet=selected_sheet,
         categories=categories,
-        selected_category=category,
+        selected_category=selected_category,
         sort_field=sort_field,
         sort_order=sort_order,
         rows=rows
     )
 
-@app.route('/reload', methods=['GET', 'POST'])
+@app.route('/reload', methods=['GET','POST'])
 def reload():
     comps = get_competitions()
     message = None
@@ -156,10 +163,30 @@ def reload():
         total = 0
         for comp in comps:
             if comp['Nom'] in selected:
-                sheet, count = process_url(comp['URL'])
+                _, count = process_url(comp['URL'])
                 total += count
         message = f"✅ {total} athlètes rechargés dans {len(selected)} compétitions."
-    return render_template('reload.html', competitions=comps, message=message)
+    return render_template('reload.html',
+                           competitions=comps,
+                           message=message)
+
+@app.route('/add', methods=['GET','POST'])
+def add():
+    message = None
+    if request.method == 'POST':
+        url = request.form.get('url')
+        if url:
+            try:
+                sheet_name, count = process_url(url)
+                append_competition(sheet_name, url)
+                message = f"✅ Compétition « {sheet_name} » ajoutée et {count} athlètes importés."
+            except Exception as e:
+                message = f"❌ Erreur : {e}"
+    return render_template('add.html', message=message)
+
+@app.route('/help', methods=['GET'])
+def help():
+    return render_template('help.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

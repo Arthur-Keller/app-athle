@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VAFA – Ajouter une compétition</title>
+
+  <!-- Variables CSS VAFA & Styles -->
+  <style>
+    :root {
+      --vafa-bleu: #0055A4;
+      --vafa-vert: #8DC63F;
+      --vafa-gris: #f8f9fa;
+    }
+    body {
+      background: var(--vafa-gris);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    .navbar-primary {
+      background: var(--vafa-bleu);
+      padding: .5rem 1rem;
+    }
+    .navbar-primary img {
+      height: 40px;
+    }
+    .navbar-primary .navbar-brand {
+      color: white;
+      font-size: 1.25rem;
+      margin-left: .5rem;
+    }
+    .nav-secondary {
+      background: white;
+      border-bottom: 2px solid var(--vafa-vert);
+      margin-bottom: 1rem;
+    }
+    .nav-secondary .nav-link {
+      color: var(--vafa-bleu);
+      font-weight: 600;
+    }
+    .nav-secondary .nav-link.disabled {
+      color: #aaa;
+      pointer-events: none;
+    }
+    .nav-secondary .nav-link.active {
+      border-bottom: 3px solid var(--vafa-vert);
+    }
+    .container {
+      max-width: 600px;
+      margin: 2rem auto;
+      background: white;
+      padding: 1.5rem;
+      border-radius: .5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .form-label {
+      font-weight: 600;
+      color: var(--vafa-bleu);
+    }
+    .form-control {
+      border: 1px solid #ccc;
+      border-radius: .25rem;
+      padding: .5rem;
+      width: 100%;
+    }
+    .btn-vafa {
+      background-color: var(--vafa-vert);
+      color: #fff;
+      border: none;
+      padding: .75rem 1.5rem;
+      border-radius: .5rem;
+      font-size: 1rem;
+      transition: background .2s, transform .1s;
+    }
+    .btn-vafa:hover {
+      background-color: #7bb132;
+      transform: translateY(-2px);
+    }
+    .btn-vafa:active {
+      transform: translateY(0);
+    }
+    .btn-outline-help {
+      margin-top: 1rem;
+      display: inline-block;
+      color: var(--vafa-bleu);
+      border: 2px solid var(--vafa-bleu);
+      padding: .5rem 1rem;
+      border-radius: .5rem;
+      text-decoration: none;
+      transition: background .2s, color .2s;
+    }
+    .btn-outline-help:hover {
+      background: var(--vafa-bleu);
+      color: white;
+    }
+    .mt-4 {
+      margin-top: 1.5rem;
+    }
+    .alert {
+      margin-top: 1rem;
+    }
+  </style>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body>
+
+  <!-- Barre de titre -->
+  <nav class="navbar navbar-primary">
+    <div class="d-flex align-items-center">
+      <img src="{{ url_for('static', filename='logo_vafa.png') }}" alt="VAFA logo" />
+      <span class="navbar-brand">VAFA – Ajouter une compétition</span>
+    </div>
+  </nav>
+
+  <!-- Navbar secondaire -->
+  <nav class="nav nav-secondary justify-content-center">
+    <a class="nav-link" href="{{ url_for('index') }}">Liste des engagé·e·s</a>
+    <a class="nav-link" href="{{ url_for('reload') }}">Recharger la liste</a>
+    <a class="nav-link active" href="{{ url_for('add') }}">Ajouter une liste</a>
+  </nav>
+
+  <div class="container">
+    <h2>Ajouter une nouvelle compétition</h2>
+    <form method="post" action="{{ url_for('add') }}">
+      <div class="mb-3">
+        <label for="url" class="form-label">URL de la liste engagés</label>
+        <input
+          type="url"
+          id="url"
+          name="url"
+          class="form-control"
+          placeholder="https://bases.athle.fr/asp.net/liste.aspx?..."
+          required
+        />
+      </div>
+      <div class="text-center mt-4">
+        <button type="submit" class="btn-vafa">Ajouter la compétition</button>
+      </div>
+    </form>
+
+    <!-- Bouton d'aide vers la page /help -->
+    <div class="text-center">
+      <a href="{{ url_for('help') }}" class="btn-outline-help">
+        Besoin d’aide&nbsp;? Voir la procédure
+      </a>
+    </div>
+
+    {% if message %}
+      <div class="alert alert-info">{{ message }}</div>
+    {% endif %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+  </script>
+</body>
+</html>

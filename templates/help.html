@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VAFA – Aide / Ajout de lien</title>
+
+  <!-- Variables CSS VAFA & Styles -->
+  <style>
+    :root {
+      --vafa-bleu: #0055A4;
+      --vafa-vert: #8DC63F;
+      --vafa-gris: #f8f9fa;
+    }
+    body {
+      background: var(--vafa-gris);
+      font-family: "Segoe UI", Arial, sans-serif;
+      padding-bottom: 2rem;
+    }
+    .navbar-primary {
+      background: var(--vafa-bleu);
+      padding: .5rem 1rem;
+    }
+    .navbar-primary .navbar-brand {
+      color: white;
+      font-size: 1.25rem;
+      margin-left: .5rem;
+    }
+    .nav-secondary {
+      background: white;
+      border-bottom: 2px solid var(--vafa-vert);
+      margin-bottom: 1rem;
+    }
+    .nav-secondary .nav-link {
+      color: var(--vafa-bleu);
+      font-weight: 600;
+    }
+    .nav-secondary .nav-link.active {
+      border-bottom: 3px solid var(--vafa-vert);
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: white;
+      padding: 1.5rem;
+      border-radius: .5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      color: var(--vafa-bleu);
+    }
+    a.help-link {
+      color: var(--vafa-vert);
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a.help-link:hover {
+      text-decoration: underline;
+    }
+    img.help-img {
+      max-width: 60%;
+      height: auto;
+      display: block;
+      margin: 1rem auto;
+      border: 1px solid #ddd;
+      border-radius: .25rem;
+    }
+    pre {
+      background: #f0f0f0;
+      padding: .75rem;
+      overflow-x: auto;
+      border-radius: .25rem;
+    }
+    .mt-4 { margin-top: 1.5rem; }
+  </style>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body>
+
+  <!-- Barre de titre -->
+  <nav class="navbar navbar-primary">
+    <div class="d-flex align-items-center">
+      <img src="{{ url_for('static', filename='logo_vafa.png') }}" alt="VAFA logo" height="40" />
+      <span class="navbar-brand">VAFA – Aide / Ajout de lien</span>
+    </div>
+  </nav>
+
+  <!-- Navbar secondaire -->
+  <nav class="nav nav-secondary justify-content-center">
+    <a class="nav-link" href="{{ url_for('index') }}">Liste des engagé·e·s</a>
+    <a class="nav-link" href="{{ url_for('reload') }}">Recharger la liste</a>
+    <a class="nav-link active" href="{{ url_for('help') }}">Ajouter une liste</a>
+  </nav>
+
+  <div class="container">
+    <h1>Ajouter un lien dans l’application</h1>
+    <p>
+      <a class="help-link" href="ajout-lien.md" target="_blank">
+        Voir la procédure détaillée (Markdown)
+      </a>
+    </p>
+
+    <h2>1. Sélection du département</h2>
+    <ol>
+      <li>Cliquez sur le lien correspondant au département où se déroule la compétition.<br>
+        Vous serez redirigé(e) vers le formulaire des engagements.</li>
+    </ol>
+    <ul>
+      <li><a href="https://bases.athle.fr/asp.net/accueil.aspx?frmbase=qualifies&frmmode=0&frmespace=37" target="_blank">Ligue Hauts-de-France</a></li>
+      <li><a href="https://bases.athle.fr/asp.net/accueil.aspx?frmbase=qualifies&frmmode=0&frmespace=1143" target="_blank">Comité de l’Aisne (02)</a></li>
+      <li><a href="https://bases.athle.fr/asp.net/accueil.aspx?frmbase=qualifies&frmmode=0&frmespace=73" target="_blank">Comité du Nord (59)</a></li>
+      <li><a href="https://bases.athle.fr/asp.net/accueil.aspx?frmbase=qualifies&frmmode=0&frmespace=1485" target="_blank">Comité de l’Oise (60)</a></li>
+      <li><a href="https://bases.athle.fr/asp.net/accueil.aspx?frmbase=qualifies&frmmode=0&frmespace=118" target="_blank">Comité du Pas-de-Calais (62)</a></li>
+      <li><a href="https://bases.athle.fr/asp.net/accueil.aspx?frmbase=qualifies&frmmode=0&frmespace=1170" target="_blank">Comité de la Somme (80)</a></li>
+    </ul>
+
+    <h2>2. Remplissage du formulaire</h2>
+    <p>Vérifiez que vous êtes bien sur la page d’accueil du formulaire :</p>
+    <img
+      src="{{ url_for('static', filename='photos/accueil.png') }}"
+      alt="Page d’accueil – Ligue Hauts-de-France"
+      class="help-img"
+    />
+
+    <ol start="2">
+      <li>Renseignez :</li>
+      <ul>
+        <li><strong>Saison :</strong> 2024-2025</li>
+        <li><strong>Compétition :</strong> 13/06 – Meeting de la Parité – LOMME</li>
+        <li><strong>Épreuve :</strong> Longueur</li>
+        <li><strong>Sexe :</strong> M</li>
+      </ul>
+      <li>Cliquez sur <strong>Rechercher</strong>.</li>
+    </ol>
+
+    <img
+      src="{{ url_for('static', filename='photos/formulaire.png') }}"
+      alt="Formulaire rempli"
+      class="help-img"
+    />
+
+    <h2>3. Récupération du lien</h2>
+    <ol>
+      <li>Une fois la liste affichée, <strong>copiez l’URL</strong> dans la barre d’adresse.</li>
+      <li>Collez ce lien dans l’application <em>Ajouter une liste</em>.</li>
+    </ol>
+
+    <p><strong>Exemple d’URL :</strong></p>
+    <pre>
+https://bases.athle.fr/asp.net/liste.aspx?frmpostback=true&frmbase=qualifies&frmmode=1&...
+    </pre>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
