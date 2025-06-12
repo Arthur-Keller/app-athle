@@ -5,11 +5,13 @@ import os
 import base64
 import math
 import requests
+import re
 from urllib.parse import urlparse, parse_qs
+from datetime import datetime, date
 from bs4 import BeautifulSoup
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, abort
 
 # --- Décodage du service_account.json depuis la var d'env Base64 ---
 b64 = os.getenv('SERVICE_ACCOUNT_JSON_BASE64')
@@ -21,7 +23,7 @@ if b64:
 # ----------------------------------------------------------------
 
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET', 'change-me')  # nécessaire pour flash()
+app.secret_key = os.getenv('FLASK_SECRET', 'change-me')
 
 # Configuration Google Sheets
 SPREADSHEET_KEY = '19tmcUn-MXUqQrzF43BYw8zeLOE7GZiQhk58MhrFAgRA'
@@ -47,7 +49,6 @@ def get_sheet_data(sheet_name):
     return rows
 
 def get_competitions():
-    """Lit l’onglet 'Competitions' et renvoie liste de dicts {'Nom':..., 'URL':...}."""
     wb = get_workbook()
     try:
         ws = wb.worksheet('Competitions')
@@ -56,7 +57,6 @@ def get_competitions():
     return ws.get_all_records()
 
 def append_competition(name, url):
-    """Ajoute une ligne [Nom, URL] dans l’onglet Competitions."""
     wb = get_workbook()
     try:
         ws = wb.worksheet('Competitions')
@@ -120,6 +120,8 @@ def process_url(url):
     if data:
         write_to_sheet(data, sheet_name)
     return sheet_name, len(data)
+
+# ---------------- ROUTES EXISTANTES ----------------
 
 @app.route('/', methods=['GET'])
 def index():
@@ -187,6 +189,66 @@ def add():
 @app.route('/help', methods=['GET'])
 def help():
     return render_template('help.html')
+
+# ---------------- ROUTE CALENDRIER ----------------
+
+def parse_french_date(s: str) -> date:
+    s = (s or "").strip()
+    # 1) format numérique jj/mm/AAAA
+    m = re.match(r'^\s*(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{2,4})\s*$', s)
+    if m:
+        day, mon, yr = m.groups()
+        try:
+            return date(int(yr), int(mon), int(day))
+        except ValueError:
+            return date.min
+    # 2) format texte "29 mai 2025"
+    month_map = {
+        'janvier':1, 'février':2, 'mars':3, 'avril':4,
+        'mai':5, 'juin':6, 'juillet':7, 'août':8,
+        'septembre':9, 'octobre':10, 'novembre':11, 'décembre':12
+    }
+    parts = s.split()
+    if len(parts) == 3:
+        day_str, mon_str, yr_str = parts
+        try:
+            day = int(day_str)
+            yr  = int(yr_str)
+            mnum = month_map.get(mon_str.lower())
+            if mnum:
+                return date(yr, mnum, day)
+        except ValueError:
+            pass
+    return date.min
+
+@app.route('/calendar')
+def calendar():
+    wb = get_workbook()
+    try:
+        ws = wb.worksheet('Calendrier')
+    except gspread.exceptions.WorksheetNotFound:
+        return "❌ Feuille “Calendrier” introuvable.", 404
+
+    # 1. Récupération brute des lignes
+    rows = ws.get_all_records()
+
+    # 2. Parsez et stockez la date
+    for r in rows:
+        r['_parsed_date'] = parse_french_date(r.get('Date', ''))
+
+    # 3. Filtrez uniquement les dates à venir (>= aujourd'hui)
+    today    = date.today()
+    upcoming = [r for r in rows if r['_parsed_date'] >= today]
+
+    # 4. Triez de la plus proche à la plus lointaine
+    upcoming.sort(key=lambda r: r['_parsed_date'])
+
+    # 5. Rendu
+    return render_template(
+        'calendar.html',
+        rows=upcoming,
+        today=today
+    )
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

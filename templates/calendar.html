@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VAFA – Calendrier des compétitions</title>
+  <style>
+    :root {
+      --vafa-bleu: #0055A4;
+      --vafa-vert: #8DC63F;
+      --vafa-orange: #F5A623;
+      --vafa-rouge: #D0021B;
+      --vafa-gris: #f8f9fa;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--vafa-gris);
+      padding-bottom: 2rem;
+    }
+
+    /* Barre de titre */
+    .navbar-primary {
+      display: flex;
+      align-items: center;
+      background: var(--vafa-bleu);
+      padding: .5rem 1rem;
+    }
+    .navbar-primary img {
+      height: 40px;
+    }
+    .navbar-primary .brand {
+      color: white;
+      font-size: 1.25rem;
+      margin-left: .5rem;
+      text-decoration: none;
+    }
+
+    /* Navbar secondaire */
+    .nav-secondary {
+      display: flex;
+      justify-content: center;
+      background: white;
+      border-bottom: 2px solid var(--vafa-vert);
+    }
+    .nav-secondary a {
+      color: var(--vafa-bleu);
+      font-weight: 600;
+      padding: .75rem 1rem;
+      text-decoration: none;
+    }
+    .nav-secondary a.active {
+      border-bottom: 3px solid var(--vafa-vert);
+    }
+
+    .container {
+      max-width: 95%;
+      margin: 1rem auto;
+      padding: 0 1rem;
+    }
+    h1 {
+      color: var(--vafa-bleu);
+      margin-bottom: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+      font-size: .9rem;
+    }
+    th {
+      background: var(--vafa-bleu);
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    /* on retire le zébrage */
+    /* tr:nth-child(even) td { background: #f9f9f9; } */
+
+    /* états des disciplines */
+    .status-oui {
+      background: var(--vafa-vert) !important;
+      color: white     !important;
+    }
+    .status-non {
+      background: var(--vafa-rouge) !important;
+      color: white      !important;
+    }
+    .status-jsp {
+      background: var(--vafa-orange) !important;
+      color: white        !important;
+    }
+
+    .legend {
+      margin: .5rem 0 1rem;
+      font-size: .9rem;
+    }
+    .legend span {
+      display: inline-block;
+      margin-right: 1rem;
+      padding: .2rem .5rem;
+      border-radius: .25rem;
+      color: #fff;
+    }
+    .legend .oui { background: var(--vafa-vert); }
+    .legend .non { background: var(--vafa-rouge); }
+    .legend .jsp { background: var(--vafa-orange); }
+  </style>
+</head>
+<body>
+
+  <!-- Barre de titre -->
+  <nav class="navbar-primary">
+    <a href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='logo_vafa.png') }}" alt="VAFA logo">
+    </a>
+    <a class="brand" href="{{ url_for('index') }}">VAFA – Calendrier</a>
+  </nav>
+
+  <!-- Navbar secondaire -->
+  <nav class="nav-secondary">
+    <a href="{{ url_for('index') }}">Liste des engagé·e·s</a>
+    <a href="{{ url_for('reload') }}">Recharger la liste</a>
+    <a href="{{ url_for('add') }}">Ajouter une liste</a>
+    <a class="active" href="{{ url_for('calendar') }}">Calendrier</a>
+  </nav>
+
+  <div class="container">
+    <h1>Calendrier des compétitions</h1>
+
+    <div class="legend">
+      <span class="oui">P – Discipline présente</span>
+      <span class="non">A – Discipline absente</span>
+      <span class="jsp">M – Donnée manquante</span>
+      <br>
+      Légende des labels : H = hommes, F = femmes, CAM = cadet masculin, “&” = mixte
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Label</th>
+          <th>Nom du meeting</th>
+          <th>Date</th>
+          <th>Lieu</th>
+          <th>Rémunération</th>
+          {% set disciplines = ['100m','200m','Longueur','Triple sauts','Hauteur','Poids','Disque','Javelot'] %}
+          {% for d in disciplines %}
+            <th>{{ d }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row['Label'] }}</td>
+          <td style="text-align:left">{{ row['Nom du meeting'] }}</td>
+          <td>{{ row['Date'] }}</td>
+          <td style="text-align:left">{{ row['Lieu'] }}</td>
+          <td>{{ row['Avec rémunération'] }}</td>
+          {% for col in disciplines %}
+            {% set raw = (row.get(col) or '').strip() %}
+            {% if raw == 'P' %}
+              <td class="status-oui"></td>
+            {% elif raw == 'A' %}
+              <td class="status-non"></td>
+            {% elif raw == 'M' %}
+              <td class="status-jsp"></td>
+            {% else %}
+              <!-- on affiche H, F, CAM, & -->
+              <td>{{ raw }}</td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
