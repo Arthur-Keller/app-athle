@@ -15,6 +15,8 @@
     body {
       background: var(--vafa-gris);
       font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      padding-bottom: 2rem;
     }
     .navbar-primary {
       background: var(--vafa-bleu);
@@ -36,10 +38,9 @@
     .nav-secondary .nav-link {
       color: var(--vafa-bleu);
       font-weight: 600;
-    }
-    .nav-secondary .nav-link.disabled {
-      color: #aaa;
-      pointer-events: none;
+      padding: .5rem 1rem;
+      text-decoration: none;
+      display: inline-block;
     }
     .nav-secondary .nav-link.active {
       border-bottom: 3px solid var(--vafa-vert);
@@ -52,6 +53,12 @@
       border-radius: .5rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
+    h2 {
+      color: var(--vafa-bleu);
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
     .form-label {
       font-weight: 600;
       color: var(--vafa-bleu);
@@ -61,6 +68,7 @@
       border-radius: .25rem;
       padding: .5rem;
       width: 100%;
+      box-sizing: border-box;
     }
     .btn-vafa {
       background-color: var(--vafa-vert);
@@ -69,6 +77,7 @@
       padding: .75rem 1.5rem;
       border-radius: .5rem;
       font-size: 1rem;
+      cursor: pointer;
       transition: background .2s, transform .1s;
     }
     .btn-vafa:hover {
@@ -92,13 +101,18 @@
       background: var(--vafa-bleu);
       color: white;
     }
-    .mt-4 {
-      margin-top: 1.5rem;
-    }
     .alert {
       margin-top: 1rem;
+      padding: .75rem 1rem;
+      border-radius: .25rem;
+      font-weight: 600;
+      background: #d9edf7;
+      color: #31708f;
+      border: 1px solid #bce8f1;
     }
   </style>
+
+  <!-- Bootstrap CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -116,9 +130,26 @@
 
   <!-- Navbar secondaire -->
   <nav class="nav nav-secondary justify-content-center">
-    <a class="nav-link" href="{{ url_for('index') }}">Liste des engagé·e·s</a>
-    <a class="nav-link" href="{{ url_for('reload') }}">Recharger la liste</a>
-    <a class="nav-link active" href="{{ url_for('add') }}">Ajouter une liste</a>
+    <a class="nav-link {% if request.endpoint=='index' %}active{% endif %}" 
+       href="{{ url_for('index') }}">
+      Liste des engagé·e·s
+    </a>
+    <a class="nav-link {% if request.endpoint=='reload' %}active{% endif %}" 
+       href="{{ url_for('reload') }}">
+      Recharger la liste
+    </a>
+    <a class="nav-link {% if request.endpoint=='add' %}active{% endif %}" 
+       href="{{ url_for('add') }}">
+      Ajouter une liste
+    </a>
+    <a class="nav-link {% if request.endpoint=='calendar' %}active{% endif %}" 
+       href="{{ url_for('calendar') }}">
+      Calendrier
+    </a>
+    <a class="nav-link {% if request.endpoint=='inscription' %}active{% endif %}" 
+       href="{{ url_for('inscription') }}">
+      Inscription
+    </a>
   </nav>
 
   <div class="container">
@@ -135,24 +166,24 @@
           required
         />
       </div>
-      <div class="text-center mt-4">
+      <div class="text-center">
         <button type="submit" class="btn-vafa">Ajouter la compétition</button>
       </div>
     </form>
 
-    <!-- Bouton d'aide vers la page /help -->
+    <!-- Bouton d’aide vers la procédure -->
     <div class="text-center">
       <a href="{{ url_for('help') }}" class="btn-outline-help">
-        Besoin d’aide&nbsp;? Voir la procédure
+        Besoin d’aide ? Voir la procédure
       </a>
     </div>
 
     {% if message %}
-      <div class="alert alert-info">{{ message }}</div>
+      <div class="alert">{{ message }}</div>
     {% endif %}
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-  </script>
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

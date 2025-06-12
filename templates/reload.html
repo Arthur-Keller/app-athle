@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>VAFA – Recharger la liste</title>
 
   <!-- Variables CSS VAFA -->
@@ -15,6 +15,8 @@
     body {
       background: var(--vafa-gris);
       font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      padding-bottom: 2rem;
     }
     .navbar-primary {
       background: var(--vafa-bleu);
@@ -22,7 +24,9 @@
     }
     .navbar-primary img { height: 50px; }
     .navbar-primary .navbar-brand {
-      color: white; font-size: 1.25rem; margin-left: .5rem;
+      color: white;
+      font-size: 1.25rem;
+      margin-left: .5rem;
     }
     .nav-secondary {
       background: white;
@@ -32,21 +36,30 @@
     .nav-secondary .nav-link {
       color: var(--vafa-bleu);
       font-weight: 600;
+      padding: .5rem 1rem;
+      text-decoration: none;
     }
-    .nav-secondary .nav-link.disabled {
-      color: #aaa;
-      pointer-events: none;
+    .nav-secondary .active {
+      border-bottom: 3px solid var(--vafa-vert);
     }
     .container {
       max-width: 800px;
       margin: 2rem auto;
       padding: 0 1rem;
     }
+    h2 {
+      color: var(--vafa-bleu);
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    .form-check {
+      margin-bottom: .75rem;
+    }
     .form-check-label {
       margin-left: .5rem;
+      font-size: 1rem;
     }
-
-    /* Nouveau style du bouton */
     .btn-vafa {
       background-color: var(--vafa-vert);
       color: #fff;
@@ -63,12 +76,18 @@
     .btn-vafa:active {
       transform: translateY(0);
     }
-
     .alert {
-      max-width: 800px;
-      margin: 1rem auto;
+      margin-top: 1.5rem;
+      padding: .75rem 1rem;
+      border-radius: .25rem;
+      font-weight: 600;
+      background: #d9edf7;
+      color: #31708f;
+      border: 1px solid #bce8f1;
     }
   </style>
+
+  <!-- Bootstrap CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -86,17 +105,34 @@
 
   <!-- Navbar secondaire -->
   <nav class="nav nav-secondary justify-content-center">
-    <a class="nav-link" href="{{ url_for('index') }}">Liste des engagé·e·s</a>
-    <a class="nav-link active" href="{{ url_for('reload') }}">Recharger la liste <small class="text-muted">(WIP)</small></a>
-    <a class="nav-link disabled" href="#">Ajouter une liste <small class="text-muted">(WIP)</small></a>
+    <a class="nav-link {% if request.endpoint=='index' %}active{% endif %}"
+       href="{{ url_for('index') }}">
+      Liste des engagé·e·s
+    </a>
+    <a class="nav-link {% if request.endpoint=='reload' %}active{% endif %}"
+       href="{{ url_for('reload') }}">
+      Recharger la liste
+    </a>
+    <a class="nav-link {% if request.endpoint=='add' %}active{% endif %}"
+       href="{{ url_for('add') }}">
+      Ajouter une liste
+    </a>
+    <a class="nav-link {% if request.endpoint=='calendar' %}active{% endif %}"
+       href="{{ url_for('calendar') }}">
+      Calendrier
+    </a>
+    <a class="nav-link {% if request.endpoint=='inscription' %}active{% endif %}"
+       href="{{ url_for('inscription') }}">
+      Inscription
+    </a>
   </nav>
 
   <div class="container">
-    <h2 class="mb-4">Sélectionnez les compétitions à recharger</h2>
+    <h2>Sélectionnez les compétitions à recharger</h2>
     <form method="post">
       <div class="row">
         {% for comp in competitions %}
-          <div class="col-md-6 mb-2">
+          <div class="col-md-6">
             <div class="form-check">
               <input class="form-check-input"
                      type="checkbox"
@@ -111,19 +147,17 @@
         {% endfor %}
       </div>
 
-      <!-- Bouton centré et stylé -->
       <div class="text-center mt-4">
-        <button type="submit" class="btn-vafa">
-          Recharger la liste
-        </button>
+        <button type="submit" class="btn-vafa">Recharger la liste</button>
       </div>
     </form>
 
     {% if message %}
-      <div class="alert alert-info mt-4">{{ message }}</div>
+      <div class="alert">{{ message }}</div>
     {% endif %}
   </div>
 
+  <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

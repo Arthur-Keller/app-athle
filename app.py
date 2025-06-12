@@ -11,7 +11,8 @@ from datetime import datetime, date
 from bs4 import BeautifulSoup
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, abort
+
 
 # --- Décodage du service_account.json depuis la var d'env Base64 ---
 b64 = os.getenv('SERVICE_ACCOUNT_JSON_BASE64')
@@ -126,11 +127,17 @@ def process_url(url):
 @app.route('/', methods=['GET'])
 def index():
     wb = get_workbook()
-    sheet_names = [ws.title for ws in wb.worksheets()]
+
+    # Récupère tous les onglets puis exclut "Calendrier" et "Competitions"
+    all_sheets = [ws.title for ws in wb.worksheets()]
+    sheet_names = [name for name in all_sheets if name not in ('Calendrier', 'Competitions', 'Engagement', 'Engagement - Meeting du Souvenir', 'Engagement - Championnat regional')]
+
+    # Sélection de la feuille (paramètre ?sheet= ou première feuille disponible)
     selected_sheet = request.args.get('sheet', sheet_names[0])
     if selected_sheet not in sheet_names:
         selected_sheet = sheet_names[0]
 
+    # Filtrage / tri
     selected_category = request.args.get('category', '')
     sort_field        = request.args.get('sort', 'Perf.')
     sort_order        = request.args.get('order', 'desc')
@@ -142,6 +149,7 @@ def index():
     reverse = (sort_order == 'desc')
     rows.sort(key=lambda r: r.get(sort_field, 0) or 0, reverse=reverse)
 
+    # Pour la liste des catégories disponibles
     all_rows   = get_sheet_data(selected_sheet)
     categories = sorted({r.get('Cat.') for r in all_rows if r.get('Cat.')})
 
@@ -155,6 +163,7 @@ def index():
         sort_order=sort_order,
         rows=rows
     )
+
 
 @app.route('/reload', methods=['GET','POST'])
 def reload():
@@ -249,6 +258,70 @@ def calendar():
         rows=upcoming,
         today=today
     )
+
+EPREUVES = ['100 m', '200 m', 'Longueur', 'Triple saut', 'Hauteur', 'Poids', 'Disque', 'Javelot']
+
+@app.route('/inscription', methods=['GET', 'POST'])
+def inscription():
+    wb = get_workbook()
+    # On lit la feuille 'Engagement' qui contient la liste des compétitions
+    try:
+        ws = wb.worksheet('Engagement')
+    except gspread.exceptions.WorksheetNotFound:
+        abort(404, description="❌ Feuille “Engagement” introuvable.")
+    # chaque ligne : {'Nom': ..., 'Feuille': ...}
+    compets = ws.get_all_records()
+
+    message = None
+    if request.method == 'POST':
+        nom  = request.form.get('nom','').strip()
+        prenom = request.form.get('prenom','').strip()
+        feuille = request.form.get('competition')
+        # on récupère les 3 épreuves + perfs
+        selections = []
+        for i in range(1,4):
+            ep = request.form.get(f'epreuve{i}')
+            perf = request.form.get(f'perf{i}')
+            if ep and ep != 'aucune' and perf:
+                selections.append((ep, perf))
+        if not nom or not prenom or not feuille or not selections:
+            flash("⚠️ Merci de renseigner votre nom, prénom, la compétition et au moins une épreuve avec perf.", "warning")
+        else:
+            try:
+                ws_cdt = wb.worksheet(feuille)
+            except gspread.exceptions.WorksheetNotFound:
+                flash(f"❌ Feuille « {feuille} » introuvable.", "danger")
+            else:
+                # on cherche la ligne correspondant à nom/prenom
+                data = ws_cdt.get_all_records()
+                idx = None
+                for i, row in enumerate(data, start=2):
+                    if row.get('Nom','').strip().lower()==nom.lower() and row.get('Prénom','').strip().lower()==prenom.lower():
+                        idx = i
+                        break
+                if idx is None:
+                    flash("❌ Athlète non trouvé·e dans la feuille d'engagement.", "danger")
+                else:
+                    # pour chaque épreuve on écrit la perf dans la colonne correspondante
+                    header = ws_cdt.row_values(1)
+                    updates = []
+                    for ep, perf in selections:
+                        try:
+                            col = header.index(ep) + 1
+                        except ValueError:
+                            flash(f"❌ Épreuve « {ep} » introuvable en entête.", "danger")
+                            continue
+                        updates.append({
+                            'range': gspread.utils.rowcol_to_a1(idx, col),
+                            'values': [[perf]]
+                        })
+                    if updates:
+                        ws_cdt.batch_update(updates)
+                        flash("✅ Inscription enregistrée.", "success")
+
+    return render_template('inscription.html',
+                           compets=compets,
+                           epreuves=EPREUVES)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

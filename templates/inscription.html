@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VAFA – Inscription</title>
+
+  <!-- Variables CSS VAFA -->
+  <style>
+    :root {
+      --vafa-bleu: #0055A4;
+      --vafa-vert: #8DC63F;
+      --vafa-gris: #f8f9fa;
+    }
+    body {
+      background: var(--vafa-gris);
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+    }
+    .navbar-primary {
+      background: var(--vafa-bleu);
+      padding: .5rem 1rem;
+    }
+    .navbar-primary img { height: 50px; }
+    .navbar-primary .navbar-brand {
+      color: white; font-size: 1.25rem; margin-left: .5rem;
+    }
+    .nav-secondary {
+      background: white;
+      border-bottom: 2px solid var(--vafa-vert);
+      margin-bottom: 1rem;
+    }
+    .nav-secondary .nav-link {
+      color: var(--vafa-bleu);
+      font-weight: 600;
+      padding: .5rem 1rem;
+      text-decoration: none;
+    }
+    .nav-secondary .nav-link.active {
+      border-bottom: 3px solid var(--vafa-vert);
+    }
+    .card {
+      background: white;
+      border-radius: .5rem;
+      padding: 1.5rem;
+      margin: 1rem auto;
+      max-width: 800px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: var(--vafa-bleu);
+      margin-bottom: 1rem;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: .3rem;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: .5rem;
+      border: 1px solid #ccc;
+      border-radius: .25rem;
+      font-size: 1rem;
+    }
+    .fieldset {
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: .25rem;
+    }
+    .fieldset legend {
+      padding: 0 .5rem;
+      font-weight: 600;
+    }
+    .btn-vafa {
+      background: var(--vafa-vert);
+      color: white;
+      padding: .6rem 1.2rem;
+      border: none;
+      border-radius: .25rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .btn-vafa:hover {
+      filter: brightness(0.9);
+    }
+    .alert {
+      margin-bottom: 1rem;
+      padding: .75rem 1rem;
+      border-radius: .25rem;
+      font-weight: 600;
+    }
+    .alert-success {
+      background: #dff0d8;
+      color: #3c763d;
+      border: 1px solid #d6e9c6;
+    }
+    .alert-danger {
+      background: #f2dede;
+      color: #a94442;
+      border: 1px solid #ebccd1;
+    }
+  </style>
+
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body>
+
+  <!-- Barre de titre -->
+  <nav class="navbar navbar-primary">
+    <div class="d-flex align-items-center">
+      <img src="{{ url_for('static', filename='logo_vafa.png') }}" alt="VAFA logo" />
+      <span class="navbar-brand">VAFA – Inscription</span>
+    </div>
+  </nav>
+
+  <!-- Navbar secondaire -->
+  <nav class="nav nav-secondary justify-content-center">
+    <a class="nav-link {% if request.endpoint=='index' %}active{% endif %}"
+       href="{{ url_for('index') }}">
+      Liste des engagé·e·s
+    </a>
+    <a class="nav-link {% if request.endpoint=='reload' %}active{% endif %}"
+       href="{{ url_for('reload') }}">
+      Recharger la liste
+    </a>
+    <a class="nav-link {% if request.endpoint=='add' %}active{% endif %}"
+       href="{{ url_for('add') }}">
+      Ajouter une liste
+    </a>
+    <a class="nav-link {% if request.endpoint=='calendar' %}active{% endif %}"
+       href="{{ url_for('calendar') }}">
+      Calendrier
+    </a>
+    <a class="nav-link {% if request.endpoint=='inscription' %}active{% endif %}"
+       href="{{ url_for('inscription') }}">
+      Inscription
+    </a>
+  </nav>
+
+  <div class="card">
+    <h1>S’inscrire à une compétition</h1>
+
+    {% if success %}
+      <div class="alert alert-success">✅ Inscription enregistrée.</div>
+    {% elif error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+      <div class="form-group">
+        <label for="nom">Nom</label>
+        <input type="text" id="nom" name="nom" value="{{ request.form.nom }}" required>
+      </div>
+
+      <div class="form-group">
+        <label for="prenom">Prénom</label>
+        <input type="text" id="prenom" name="prenom" value="{{ request.form.prenom }}" required>
+      </div>
+
+      <div class="form-group">
+        <label for="competition">Compétition</label>
+        <select id="competition" name="competition" class="form-select" required>
+          <option value="">— Sélectionnez —</option>
+          {% for c in comps %}
+            <option value="{{ c['Feuille'] }}" {% if request.form.competition==c['Feuille'] %}selected{% endif %}>
+              {{ c['Nom'] }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% for i in [1,2,3] %}
+      <fieldset class="fieldset">
+        <legend>Épreuve #{{ i }}</legend>
+        <div class="row">
+          <div class="col-md-8 form-group">
+            <label for="epreuve_{{ i }}">Épreuve</label>
+            <select id="epreuve_{{ i }}" name="epreuve_{{ i }}" class="form-select">
+              <option value="">— aucune —</option>
+              {% for h in headers %}
+                <option value="{{ h }}" {% if request.form['epreuve_'+i|string]==h %}selected{% endif %}>
+                  {{ h }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4 form-group">
+            <label for="perf_{{ i }}">Performance</label>
+            <input type="text" id="perf_{{ i }}" name="perf_{{ i }}"
+                   value="{{ request.form['perf_'+i|string] }}" class="form-control" placeholder="ex. 12.34">
+          </div>
+        </div>
+      </fieldset>
+      {% endfor %}
+
+      <div class="text-end mt-3">
+        <button type="submit" class="btn-vafa">Envoyer</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+  </script>
+</body>
+</html>

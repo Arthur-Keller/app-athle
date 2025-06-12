@@ -127,11 +127,28 @@
   </nav>
 
   <!-- Navbar secondaire -->
-  <nav class="nav-secondary">
-    <a href="{{ url_for('index') }}">Liste des engagé·e·s</a>
-    <a href="{{ url_for('reload') }}">Recharger la liste</a>
-    <a href="{{ url_for('add') }}">Ajouter une liste</a>
-    <a class="active" href="{{ url_for('calendar') }}">Calendrier</a>
+  <!-- Navbar secondaire -->
+  <nav class="nav nav-secondary justify-content-center">
+    <a class="nav-link {% if request.endpoint=='index' %}active{% endif %}"
+       href="{{ url_for('index') }}">
+      Liste des engagé·e·s
+    </a>
+    <a class="nav-link {% if request.endpoint=='reload' %}active{% endif %}"
+       href="{{ url_for('reload') }}">
+      Recharger la liste
+    </a>
+    <a class="nav-link {% if request.endpoint=='add' %}active{% endif %}"
+       href="{{ url_for('add') }}">
+      Ajouter une liste
+    </a>
+    <a class="nav-link {% if request.endpoint=='calendar' %}active{% endif %}"
+       href="{{ url_for('calendar') }}">
+      Calendrier
+    </a>
+    <a class="nav-link {% if request.endpoint=='inscription' %}active{% endif %}"
+       href="{{ url_for('inscription') }}">
+      Inscription
+    </a>
   </nav>
 
   <div class="container">
