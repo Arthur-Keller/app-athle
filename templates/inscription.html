@@ -158,20 +158,24 @@
     <form method="post">
       <div class="form-group">
         <label for="nom">Nom</label>
-        <input type="text" id="nom" name="nom" value="{{ request.form.nom }}" required>
+        <input type="text" id="nom" name="nom"
+               value="{{ request.form.nom }}" required>
       </div>
 
       <div class="form-group">
         <label for="prenom">Prénom</label>
-        <input type="text" id="prenom" name="prenom" value="{{ request.form.prenom }}" required>
+        <input type="text" id="prenom" name="prenom"
+               value="{{ request.form.prenom }}" required>
       </div>
 
       <div class="form-group">
         <label for="competition">Compétition</label>
-        <select id="competition" name="competition" class="form-select" required>
+        <select id="competition" name="competition"
+                class="form-select" required>
           <option value="">— Sélectionnez —</option>
-          {% for c in comps %}
-            <option value="{{ c['Feuille'] }}" {% if request.form.competition==c['Feuille'] %}selected{% endif %}>
+          {% for c in compets %}
+            <option value="{{ c['Feuille'] }}"
+              {% if request.form.competition==c['Feuille'] %}selected{% endif %}>
               {{ c['Nom'] }}
             </option>
           {% endfor %}
@@ -184,10 +188,12 @@
         <div class="row">
           <div class="col-md-8 form-group">
             <label for="epreuve_{{ i }}">Épreuve</label>
-            <select id="epreuve_{{ i }}" name="epreuve_{{ i }}" class="form-select">
+            <select id="epreuve_{{ i }}" name="epreuve_{{ i }}"
+                    class="form-select">
               <option value="">— aucune —</option>
-              {% for h in headers %}
-                <option value="{{ h }}" {% if request.form['epreuve_'+i|string]==h %}selected{% endif %}>
+              {% for h in epreuves %}
+                <option value="{{ h }}"
+                  {% if request.form['epreuve_'+i|string]==h %}selected{% endif %}>
                   {{ h }}
                 </option>
               {% endfor %}
@@ -195,8 +201,12 @@
           </div>
           <div class="col-md-4 form-group">
             <label for="perf_{{ i }}">Performance</label>
-            <input type="text" id="perf_{{ i }}" name="perf_{{ i }}"
-                   value="{{ request.form['perf_'+i|string] }}" class="form-control" placeholder="ex. 12.34">
+            <input type="text"
+                   id="perf_{{ i }}"
+                   name="perf_{{ i }}"
+                   value="{{ request.form['perf_'+i|string] }}"
+                   class="form-control"
+                   placeholder="ex. 12.34">
           </div>
         </div>
       </fieldset>
